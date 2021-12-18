@@ -2,8 +2,14 @@ import math
 
 def backtrack(state):
     
-    v = mrv(state)
-    print(v)
+    x, y = mrv(state)
+    domain = state.domain
+    
+    for d in domain:
+        new_board = state.board
+        new_board[x][y] = d
+        
+    
     
     
 def finished(state):
