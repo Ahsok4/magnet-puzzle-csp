@@ -7,6 +7,7 @@ if __name__ == "__main__":
     input_numbers = []
     input = open('input.txt').readlines()
     for line in input:
+        line = line.rstrip()
         numbers = line.split(' ')
         n = [int(number) for number in numbers]
         input_numbers.append(n)
@@ -25,7 +26,7 @@ if __name__ == "__main__":
             
     board = input_numbers[5:]
     
-    init_state = state(board, None, domain, None, None)
+    init_state = state(board, None, domain, None, None, None, None)
     
     backtrack(init_state)
     
