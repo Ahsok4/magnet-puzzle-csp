@@ -31,8 +31,7 @@ if __name__ == "__main__":
     
     State.board = board
     State.domain = domain
-    # print(State.bound_x[0])
-    # print(State.bound_x[1])
+
     
     
     backtrack(board, domain)

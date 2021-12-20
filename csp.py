@@ -16,11 +16,10 @@ def backtrack(board, domain):
 
     x1, y1 = mrv(board, domain)
     x2, y2 = get_other_pole(board, x1, y1)
-    print (x1, y1)
-    print(x2, y2)
+    # print (x1, y1)
+    # print(x2, y2)
     
     
-    print_state(board)
     
     for d in domain[x1][y1]:
         new_board = copy.deepcopy(board)
@@ -39,6 +38,7 @@ def backtrack(board, domain):
         if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
         if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
         if (is_safe(board, x1, y1, x2, y2)):
+            #forward check
             x = backtrack(new_board, new_domain)
             if (x):
                 return True
@@ -70,7 +70,8 @@ def is_safe(board, x1, y1, x2, y2):
                 p_count+=1
             elif (board[i][j]=='-'):
                 m_count+=1
-        if(p_count > State.bound_y[0][i] or m_count >= State.bound_y[1][i]):
+        if(p_count > State.bound_y[0][i] or m_count > State.bound_y[1][i]):
+            # print (p_count, m_count)
             return False
         
     for i in range (0, m):
@@ -81,8 +82,10 @@ def is_safe(board, x1, y1, x2, y2):
                 p_count+=1
             elif (board[j][i]=='-'):
                 m_count+=1
-        if(p_count > State.bound_x[0][i] or m_count >= State.bound_x[1][i]):
-            return False       
+        if(p_count > State.bound_x[0][i] or m_count > State.bound_x[1][i]):
+            # print (p_count, m_count)
+            return False     
+
         
     #check other constraints
     
