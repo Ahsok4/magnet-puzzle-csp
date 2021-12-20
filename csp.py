@@ -1,75 +1,239 @@
 import math
-from os import stat
+from os import set_inheritable, stat
 from state import *
+import copy
 
-def backtrack(state:state):
+def backtrack(board, domain):
+    n = len(board)
+    m = len(board[0])
     
-    x1, y1 = mrv(state)
-    domain = state.domain[x1][y1]
+    if (finished(board)):
+        print_state(board)
+        return True
     
-    for d in domain:
-        new_board = state.board
-        x2, y2 = get_other_pole(state, x1, y1)
+    if (checked_cells(board, n, m) == n*m):
+        return False
+
+    x1, y1 = mrv(board, domain)
+    x2, y2 = get_other_pole(board, x1, y1)
+    print (x1, y1)
+    print(x2, y2)
+    
+    
+    print_state(board)
+    
+    for d in domain[x1][y1]:
+        new_board = copy.deepcopy(board)
+        new_domain = copy.deepcopy(domain)
+        
         if (d == '+'):
             d_prime = '-'
         elif (d == '-'):
             d_prime = '+'
         elif (d == ' '):
             d_prime = ' '
-            
+        
         new_board[x1][y1] = d
         new_board[x2][y2] = d_prime
         
-        new_domain = state.domain
-        new_domain[x1][y1].remove(d)
-        new_domain[x2][y2].remove(d_prime)
+        if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
+        if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
+        if (is_safe(board, x1, y1, x2, y2)):
+            x = backtrack(new_board, new_domain)
+            if (x):
+                return True
+            
+    return False
+
+def checked_cells(board, n, m):
+    count = 0
+    for i in range(0, n):
+        for j in range(0, m):
+            if (board[i][j] == '+' or board[i][j] == '-' or board[i][j] == ' '):
+                count+=1
+    
+    return count
+
+
+def is_safe(board, x1, y1, x2, y2):
+    
+    n = len(board)
+    m = len(board[0])
+    
+    #check plus and minus counts constraint
+    
+    for i in range (0, n):
+        p_count = 0
+        m_count = 0
+        for j in range (0, m):
+            if (board[i][j]=='+'):
+                p_count+=1
+            elif (board[i][j]=='-'):
+                m_count+=1
+        if(p_count > State.bound_y[0][i] or m_count >= State.bound_y[1][i]):
+            return False
         
-        new_state = state(new_board, state, new_domain, x1, y1, x2, y2)
-        #forward check
+    for i in range (0, m):
+        p_count = 0
+        m_count = 0
+        for j in range (0, n):
+            if (board[j][i]=='+'):
+                p_count+=1
+            elif (board[j][i]=='-'):
+                m_count+=1
+        if(p_count > State.bound_x[0][i] or m_count >= State.bound_x[1][i]):
+            return False       
         
-      
-def forward_check(state:state):
+    #check other constraints
+    
+    neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
+                 [x2-1, y2, '2'], [x2+1, y2, '2'], [x2, y2-1, '2'], [x2, y2+1, '2']]
+    
+    for i in range(0, 8):
+        x = neighbors[i][0]
+        y = neighbors[i][1]
+        
+        if (x < 0 or x >= n or y < 0 or y >= m or (x == x1 and y == y1) or (x == x2 and y == y2)):
+            neighbors[i] = None
+    for pair in neighbors:
+        if (pair != None):
+            if(pair[2] == '1'):
+                if (board[pair[0]][pair[1]]==board[x1][y1]):
+                    return False
+            else:
+                if (board[pair[0]][pair[1]]==board[x2][y2]):
+                    return False
+    
+    return True
+        
+    
+        
+    
+    
+    
+def print_state(board):
+    n = len(board)
+    m = len(board[0])
+    print('-------------------')
+    for i in range(0, n):
+        for j in range(0, m):
+            print(board[i][j], end=' ')
+        print('\n')
+     
+    print('-------------------')
+     
+def forward_check(state:State):
     n = len(state.board)
     m = len(state.board[0])
     
-    if (state.x1-state.x2 == 0):
-        is_vertical = False
-    else:
-        is_vertical = True      
-        
-      
+    x1 = state.x1
+    y1 = state.y1
+    x2 = state.x2
+    y2 = state.y2
     
-    return  
+    
+    neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
+                 [x2-1, y2, '2'], [x2+1, y2, '2'], [x2, y2-1, '2'], [x2, y2+1, '2']]
+    
+    for i in range(0, 8):
+        x = neighbors[i][0]
+        y = neighbors[i][1]
         
-def get_other_pole(state, x, y):
+        if (x < 0 or x >= n or y < 0 or y >= m or (x == x1 and y == y1) or (x == x2 and y == y2)):
+            neighbors[i] = None
+    
+    
+    domain = state.domain
     board = state.board
+    
+    print_state(state=state)
+    
+    value_1 = board[x1][y1]
+    value_2 = board[x2][y2]
+    
+    for pair in neighbors:
+        if (pair != None):
+            print(pair)
+            mode = pair[2]
+            
+            if (value_1 =='+' or value_1 =='-'):
+                if (mode == '1'):
+                    if (board[pair[0]][pair[1]] == value_1):
+                        return False, None
+                    elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_2):
+                        x, y = get_other_pole(board, pair[0], pair[1])
+                        if value_2 in domain[x][y]:domain[x][y].remove(value_2)
+                        if value_1 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_1)
+                        
+                elif (mode == '2'):
+                    if (board[pair[0]][pair[1]] == value_2):
+                        return False, None
+                    elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_1):
+                        x, y = get_other_pole(board, pair[0], pair[1])
+                        if value_1 in domain[x][y]:domain[x][y].remove(value_1)
+                        if value_2 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_2)
+                        
+                    
+    return True, domain
+
+def get_other_pole(board, x, y):
     num = board[x][y]
-    if (board[x][y-1] == num):
+    n = len(board)
+    m = len(board[0])
+    if (board[x][y-1] == num and y-1 > 0):
         return x, y-1
-    elif (board[x][y+1] == num):
+    elif (y+1 < m and board[x][y+1] == num):
         return x, y+1
-    elif (board[x-1][y] == num):
+    elif (board[x-1][y] == num and x-1 > 0):
         return x-1, y
-    elif (board[x+1][y] == num):
+    elif (board[x+1][y] == num and x+1 < n):
         return x+1, y
     
-    return 'failure'
-    
-    
-def finished(state):
-    return
+    return None, None
 
-def mrv(state):
-    min = math.inf
-    for i in range(0, len(state.domain)):
-        for j in range(0, len(state.domain[0])):
-            size = len(state.domain[i][j])
-            if (size < min and (state.board[i][j] != '+' or 
-                                state.board[i][j] != '-' or 
-                                state.board[i][j] != ' ')):
-                min = size
-                x, y = i, j
+    
+def finished(board):
+    
+    n = len(board)
+    m = len(board[0])
+    
+    for i in range (0, n):
+        plus_count = 0
+        minus_count = 0
+        for j in range(0, m):
+            if (board[i][j] == '+'):
+                plus_count += 1
+            elif (board[i][j] == '-'):
+                minus_count += 1
+        if ((plus_count != State.bound_x[0][i]) or
+            (minus_count != State.bound_x[1][i])):
+            return False
+        
+    for i in range (0, m):
+        plus_count = 0
+        minus_count = 0
+        for j in range(0, n):
+            if (board[j][i] == '+'):
+                plus_count += 1
+            elif (board[j][i] == '-'):
+                minus_count += 1
+        if ((plus_count != State.bound_y[0][i]) or
+            (minus_count != State.bound_y[1][i])):
+            return False
                 
-    return x, y
+    return True
+
+def mrv(board, domain):
+    min = math.inf
+    for i in range(0, len(domain)):
+        for j in range(0, len(domain[0])):
+            size = len(domain[i][j])
+            if (board[i][j] != '+' and 
+                    board[i][j] != '-' and 
+                    board[i][j] != ' '):
+                if (size < min):
+                    min = size
+                    return i, j
+                
         
     

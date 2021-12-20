@@ -14,8 +14,11 @@ if __name__ == "__main__":
     
     
     n, m = input_numbers[0]   
-    bound_x = input_numbers[1:3]
-    bound_y = input_numbers[3:5]
+    bound_y = input_numbers[1:3]
+    bound_x = input_numbers[3:5]
+    
+    State.bound_y = bound_y
+    State.bound_x = bound_x
     
     domain = []
     for i in range(0, n):
@@ -26,9 +29,13 @@ if __name__ == "__main__":
             
     board = input_numbers[5:]
     
-    init_state = state(board, None, domain, None, None, None, None)
+    State.board = board
+    State.domain = domain
+    # print(State.bound_x[0])
+    # print(State.bound_x[1])
     
-    backtrack(init_state)
+    
+    backtrack(board, domain)
     
     
     
