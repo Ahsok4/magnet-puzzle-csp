@@ -1,5 +1,6 @@
 from state import *
 from csp import *
+from time import time
 
 
 if __name__ == "__main__":
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     for i in range(0, n):
         d = []
         for j in range (0, m):
-            d.append(['+', '-', ' '])
+            d.append(['-', '+', ' '])
         domain.append(d)
             
     board = input_numbers[5:]
@@ -32,13 +33,14 @@ if __name__ == "__main__":
     State.board = board
     State.domain = domain
 
+    # print(domain)
     
-    
+    start_time = time()
     backtrack(board, domain)
-
-
-
-
+    end_time = time()
+    
+    print('total time: ', end_time-start_time)
+    
 
     ####   comment
     

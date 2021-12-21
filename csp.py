@@ -1,5 +1,4 @@
 import math
-from os import set_inheritable, stat
 from state import *
 import copy
 
@@ -15,9 +14,13 @@ def backtrack(board, domain):
         return False
 
     x1, y1 = mrv(board, domain)
-    x2, y2 = get_other_pole(board, x1, y1)
-
-    print_state(board)
+    x2, y2 = get_other_pole(x1, y1)
+    
+    # print(x1, y1, x2, y2)
+    if (not is_safe(board, x1, y1, x2, y2)):
+        return False
+    # print_state(board)
+    # print(domain)
     
     for d in domain[x1][y1]:
         new_board = copy.deepcopy(board)
@@ -35,16 +38,16 @@ def backtrack(board, domain):
         
         if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
         if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
+        
         if (is_safe(board, x1, y1, x2, y2)):
-            flag, nd = forward_check(board, new_domain, x1, y1, x2, y2)
+            flag, nd = forward_check(new_board, new_domain, x1, y1, x2, y2)
             if (flag):
-                x = backtrack(new_board, nd)
-                if (x):
+                if (backtrack(new_board, nd)):
                     return True
             else:
-                return False
+                continue
         else:
-            return False
+            continue
             
     return False
 
@@ -101,6 +104,7 @@ def is_safe(board, x1, y1, x2, y2):
         
         if (x < 0 or x >= n or y < 0 or y >= m or (x == x1 and y == y1) or (x == x2 and y == y2)):
             neighbors[i] = None
+    
     for pair in neighbors:
         if (pair != None):
             if(pair[2] == '1'):
@@ -112,10 +116,6 @@ def is_safe(board, x1, y1, x2, y2):
     
     return True
         
-    
-        
-    
-    
     
 def print_state(board):
     n = len(board)
@@ -149,7 +149,7 @@ def forward_check(board, domain, x1, y1, x2, y2):
     
     value_1 = board[x1][y1]
     value_2 = board[x2][y2]
-    
+    # print(neighbors)
     for pair in neighbors:
         if (pair != None):
             mode = pair[2]
@@ -158,34 +158,46 @@ def forward_check(board, domain, x1, y1, x2, y2):
                     if (board[pair[0]][pair[1]] == value_1):
                         return False, None
                     elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_2):
-                        x, y = get_other_pole(board, pair[0], pair[1])
-                        if value_2 in domain[x][y]:domain[x][y].remove(value_2)
-                        if value_1 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_1)
+                        x, y = get_other_pole(pair[0], pair[1])
+                        if (x != None and y != None):                        
+                            if value_2 in domain[x][y]:domain[x][y].remove(value_2)
+                            if value_1 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_1)
+                            if len(domain[x][y])==0:
+                                return False, None
+                            if len(domain[pair[0]][pair[1]])==0:
+                                return False, None
                         
                 elif (mode == '2'):
                     if (board[pair[0]][pair[1]] == value_2):
                         return False, None
                     elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_1):
-                        x, y = get_other_pole(board, pair[0], pair[1])
-                        if value_1 in domain[x][y]:domain[x][y].remove(value_1)
-                        if value_2 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_2)
+                        x, y = get_other_pole(pair[0], pair[1])
+                        if (x != None and y != None):                        
+                            if value_1 in domain[x][y]:domain[x][y].remove(value_1)
+                            if value_2 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_2)
+                            if len(domain[x][y])==0:
+                                return False, None
+                            if len(domain[pair[0]][pair[1]])==0:
+                                return False, None
                         
-                    
+    
+        
     return True, domain
 
-def get_other_pole(board, x, y):
-    num = board[x][y]
-    n = len(board)
-    m = len(board[0])
-    if (board[x][y-1] == num and y-1 > 0):
+def get_other_pole(x, y):
+    num = State.board[x][y]
+    n = len(State.board)
+    m = len(State.board[0])
+    if (y-1 >= 0 and State.board[x][y-1] == num):
         return x, y-1
-    elif (y+1 < m and board[x][y+1] == num):
+    elif (y+1 < m and State.board[x][y+1] == num):
         return x, y+1
-    elif (board[x-1][y] == num and x-1 > 0):
+    elif (x-1 >= 0 and State.board[x-1][y] == num):
         return x-1, y
-    elif (board[x+1][y] == num and x+1 < n):
+    elif (x+1 < n and State.board[x+1][y] == num):
         return x+1, y
     
+    # print(x, y)
     return None, None
 
     
@@ -222,8 +234,8 @@ def finished(board):
 
 def mrv(board, domain):
     min = math.inf
-    for i in range(0, len(domain)):
-        for j in range(0, len(domain[0])):
+    for i in range(0, len(board)):
+        for j in range(0, len(board[0])):
             size = len(domain[i][j])
             if (board[i][j] != '+' and 
                     board[i][j] != '-' and 
