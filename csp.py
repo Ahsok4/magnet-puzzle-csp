@@ -16,10 +16,8 @@ def backtrack(board, domain):
 
     x1, y1 = mrv(board, domain)
     x2, y2 = get_other_pole(board, x1, y1)
-    # print (x1, y1)
-    # print(x2, y2)
-    
-    
+
+    print_state(board)
     
     for d in domain[x1][y1]:
         new_board = copy.deepcopy(board)
@@ -38,10 +36,15 @@ def backtrack(board, domain):
         if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
         if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
         if (is_safe(board, x1, y1, x2, y2)):
-            #forward check
-            x = backtrack(new_board, new_domain)
-            if (x):
-                return True
+            flag, nd = forward_check(board, new_domain, x1, y1, x2, y2)
+            if (flag):
+                x = backtrack(new_board, nd)
+                if (x):
+                    return True
+            else:
+                return False
+        else:
+            return False
             
     return False
 
@@ -125,14 +128,9 @@ def print_state(board):
      
     print('-------------------')
      
-def forward_check(state:State):
-    n = len(state.board)
-    m = len(state.board[0])
-    
-    x1 = state.x1
-    y1 = state.y1
-    x2 = state.x2
-    y2 = state.y2
+def forward_check(board, domain, x1, y1, x2, y2):
+    n = len(board)
+    m = len(board[0])
     
     
     neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
@@ -146,19 +144,15 @@ def forward_check(state:State):
             neighbors[i] = None
     
     
-    domain = state.domain
-    board = state.board
     
-    print_state(state=state)
+    # print_state(board)
     
     value_1 = board[x1][y1]
     value_2 = board[x2][y2]
     
     for pair in neighbors:
         if (pair != None):
-            print(pair)
             mode = pair[2]
-            
             if (value_1 =='+' or value_1 =='-'):
                 if (mode == '1'):
                     if (board[pair[0]][pair[1]] == value_1):
@@ -208,8 +202,8 @@ def finished(board):
                 plus_count += 1
             elif (board[i][j] == '-'):
                 minus_count += 1
-        if ((plus_count != State.bound_x[0][i]) or
-            (minus_count != State.bound_x[1][i])):
+        if ((plus_count != State.bound_y[0][i]) or
+            (minus_count != State.bound_y[1][i])):
             return False
         
     for i in range (0, m):
@@ -220,8 +214,8 @@ def finished(board):
                 plus_count += 1
             elif (board[j][i] == '-'):
                 minus_count += 1
-        if ((plus_count != State.bound_y[0][i]) or
-            (minus_count != State.bound_y[1][i])):
+        if ((plus_count != State.bound_x[0][i]) or
+            (minus_count != State.bound_x[1][i])):
             return False
                 
     return True
