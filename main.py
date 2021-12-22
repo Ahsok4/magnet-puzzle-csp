@@ -6,7 +6,7 @@ from time import time
 if __name__ == "__main__":
     
     input_numbers = []
-    input = open('input.txt').readlines()
+    input = open('input2.txt').readlines()
     for line in input:
         line = line.rstrip()
         numbers = line.split(' ')
@@ -42,7 +42,6 @@ if __name__ == "__main__":
     print('total time: ', end_time-start_time)
     
 
-    ####   comment
     
     
     

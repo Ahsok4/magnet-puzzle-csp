@@ -14,6 +14,18 @@ def backtrack(board, domain):
         return False
 
     x1, y1 = mrv(board, domain)
+    # temp = False
+    # for i in range (0, n):
+    #     for j in range(0, m):
+    #         if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
+    #             x1 = i
+    #             y1 = j
+    #             temp = True
+    #             break
+    #     if temp:
+    #         break
+                
+                
     x2, y2 = get_other_pole(x1, y1)
     
     # print(x1, y1, x2, y2)
@@ -33,21 +45,23 @@ def backtrack(board, domain):
         elif (d == ' '):
             d_prime = ' '
         
+        ### assign value to board
+        
         new_board[x1][y1] = d
         new_board[x2][y2] = d_prime
         
         if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
-        if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
+        if d_prime in new_domain[x1][y1]:new_domain[x1][y1].remove(d_prime)
         
+        if d in new_domain[x2][y2]:new_domain[x2][y2].remove(d)
+        if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
+        # print_state(board)
+        # print_state(new_board)
         if (is_safe(board, x1, y1, x2, y2)):
             flag, nd = forward_check(new_board, new_domain, x1, y1, x2, y2)
             if (flag):
                 if (backtrack(new_board, nd)):
                     return True
-            else:
-                continue
-        else:
-            continue
             
     return False
 
@@ -65,35 +79,6 @@ def is_safe(board, x1, y1, x2, y2):
     
     n = len(board)
     m = len(board[0])
-    
-    #check plus and minus counts constraint
-    
-    for i in range (0, n):
-        p_count = 0
-        m_count = 0
-        for j in range (0, m):
-            if (board[i][j]=='+'):
-                p_count+=1
-            elif (board[i][j]=='-'):
-                m_count+=1
-        if(p_count > State.bound_y[0][i] or m_count > State.bound_y[1][i]):
-            # print (p_count, m_count)
-            return False
-        
-    for i in range (0, m):
-        p_count = 0
-        m_count = 0
-        for j in range (0, n):
-            if (board[j][i]=='+'):
-                p_count+=1
-            elif (board[j][i]=='-'):
-                m_count+=1
-        if(p_count > State.bound_x[0][i] or m_count > State.bound_x[1][i]):
-            # print (p_count, m_count)
-            return False     
-
-        
-    #check other constraints
     
     neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
                  [x2-1, y2, '2'], [x2+1, y2, '2'], [x2, y2-1, '2'], [x2, y2+1, '2']]
@@ -114,6 +99,50 @@ def is_safe(board, x1, y1, x2, y2):
                 if (board[pair[0]][pair[1]]==board[x2][y2]):
                     return False
     
+    #check plus and minus counts constraint
+    
+    for i in range (0, n):
+        p_count = 0
+        m_count = 0
+        all_init = True
+        for j in range (0, m):
+            if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
+                all_init = False
+            if (board[i][j]=='+'):
+                p_count+=1
+            elif (board[i][j]=='-'):
+                m_count+=1
+        
+        if (all_init):
+            # print('all init')
+            if(p_count != State.bound_y[0][i] or m_count != State.bound_y[1][i]):
+                return False
+        else:
+            if(p_count > State.bound_y[0][i] or m_count > State.bound_y[1][i]):
+                return False
+        
+    for i in range (0, m):
+        p_count = 0
+        m_count = 0
+        all_init = True
+
+        for j in range (0, n):
+            if (board[j][i] != '+' and board[j][i] != '-' and board[j][i] != ' '):
+                all_init = False
+            if (board[j][i]=='+'):
+                p_count+=1
+            elif (board[j][i]=='-'):
+                m_count+=1
+        if (all_init):
+            # print('all init')
+            if(p_count != State.bound_x[0][i] or m_count != State.bound_x[1][i]):
+                return False
+        else:
+            if(p_count > State.bound_x[0][i] or m_count > State.bound_x[1][i]):
+                return False     
+    
+    
+    
     return True
         
     
@@ -124,7 +153,7 @@ def print_state(board):
     for i in range(0, n):
         for j in range(0, m):
             print(board[i][j], end=' ')
-        print('\n')
+        print()
      
     print('-------------------')
      
