@@ -24,7 +24,7 @@ def backtrack(board, domain):
         return False
     
     ## (LCV)
-    lcv_domain = lcv(board, domain, x1, y1)
+    lcv_domain = lcv(domain, x1, y1)
     
     ## loop on domain
     for d in lcv_domain:
@@ -266,11 +266,8 @@ def mrv(board, domain):
                     return i, j
                 
                 
-def lcv(m_board, m_domain, x1, y1):
-    board = copy.deepcopy(m_board)
+def lcv(m_domain, x1, y1):
     domain = copy.deepcopy(m_domain)
-    sorted_domain = []
-    x2, y2 = get_other_pole(x1, y1)
     neighbors = get_neighbors(x1, y1)
     constraint_counts = []
     for d in domain:
