@@ -10,31 +10,24 @@ def backtrack(board, domain):
         print_state(board)
         return True
     
+    ## if all variables checked and didnt satisfy the constraints
     if (checked_cells(board, n, m) == n*m):
         return False
 
-    x1, y1 = mrv(board, domain)
-    # temp = False
-    # for i in range (0, n):
-    #     for j in range(0, m):
-    #         if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
-    #             x1 = i
-    #             y1 = j
-    #             temp = True
-    #             break
-    #     if temp:
-    #         break
-                
-                
+    ## choose a variable based on lenght of domain (MRV)
+    
+    x1, y1 = mrv(board, domain)  
     x2, y2 = get_other_pole(x1, y1)
     
-    # print(x1, y1, x2, y2)
+    ## check constraints of problem
     if (not is_safe(board, x1, y1, x2, y2)):
         return False
-    # print_state(board)
-    # print(domain)
     
-    for d in domain[x1][y1]:
+    ## (LCV)
+    lcv_domain = lcv(board, domain, x1, y1)
+    
+    ## loop on domain
+    for d in lcv_domain:
         new_board = copy.deepcopy(board)
         new_domain = copy.deepcopy(domain)
         
@@ -45,8 +38,7 @@ def backtrack(board, domain):
         elif (d == ' '):
             d_prime = ' '
         
-        ### assign value to board
-        
+        ## assign value to board
         new_board[x1][y1] = d
         new_board[x2][y2] = d_prime
         
@@ -55,24 +47,15 @@ def backtrack(board, domain):
         
         if d in new_domain[x2][y2]:new_domain[x2][y2].remove(d)
         if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
-        # print_state(board)
-        # print_state(new_board)
-        if (is_safe(board, x1, y1, x2, y2)):
-            flag, nd = forward_check(new_board, new_domain, x1, y1, x2, y2)
-            if (flag):
-                if (backtrack(new_board, nd)):
-                    return True
+        
+        ## forward check
+        flag, nd = forward_check(new_board, new_domain, x1, y1, x2, y2)
+        
+        if (flag):
+            if (backtrack(new_board, nd)):
+                return True
             
     return False
-
-def checked_cells(board, n, m):
-    count = 0
-    for i in range(0, n):
-        for j in range(0, m):
-            if (board[i][j] == '+' or board[i][j] == '-' or board[i][j] == ' '):
-                count+=1
-    
-    return count
 
 
 def is_safe(board, x1, y1, x2, y2):
@@ -80,24 +63,15 @@ def is_safe(board, x1, y1, x2, y2):
     n = len(board)
     m = len(board[0])
     
-    neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
-                 [x2-1, y2, '2'], [x2+1, y2, '2'], [x2, y2-1, '2'], [x2, y2+1, '2']]
-    
-    for i in range(0, 8):
-        x = neighbors[i][0]
-        y = neighbors[i][1]
-        
-        if (x < 0 or x >= n or y < 0 or y >= m or (x == x1 and y == y1) or (x == x2 and y == y2)):
-            neighbors[i] = None
+    neighbors = get_neighbors(x1, y1)
     
     for pair in neighbors:
-        if (pair != None):
-            if(pair[2] == '1'):
-                if (board[pair[0]][pair[1]]==board[x1][y1]):
-                    return False
-            else:
-                if (board[pair[0]][pair[1]]==board[x2][y2]):
-                    return False
+        if(pair[2] == '1'):
+            if (board[pair[0]][pair[1]]==board[x1][y1]):
+                return False
+        else:
+            if (board[pair[0]][pair[1]]==board[x2][y2]):
+                return False
     
     #check plus and minus counts constraint
     
@@ -161,6 +135,48 @@ def forward_check(board, domain, x1, y1, x2, y2):
     n = len(board)
     m = len(board[0])
     
+    neighbors = get_neighbors(x1, y1)
+    
+    
+    value_1 = board[x1][y1]
+    value_2 = board[x2][y2]
+    for pair in neighbors:
+        mode = pair[2]
+        if (value_1 =='+' or value_1 =='-'):
+            if (mode == '1'):
+                if (board[pair[0]][pair[1]] == value_1):
+                    return False, None
+                elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_2):
+                    x, y = get_other_pole(pair[0], pair[1])
+                    if (x != None and y != None):                        
+                        if value_2 in domain[x][y]:domain[x][y].remove(value_2)
+                        if value_1 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_1)
+                        if len(domain[x][y])==0:
+                            return False, None
+                        if len(domain[pair[0]][pair[1]])==0:
+                            return False, None
+                        
+            elif (mode == '2'):
+                if (board[pair[0]][pair[1]] == value_2):
+                    return False, None
+                elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_1):
+                    x, y = get_other_pole(pair[0], pair[1])
+                    if (x != None and y != None):                        
+                        if value_1 in domain[x][y]:domain[x][y].remove(value_1)
+                        if value_2 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_2)
+                        if len(domain[x][y])==0:
+                            return False, None
+                        if len(domain[pair[0]][pair[1]])==0:
+                            return False, None
+                        
+    
+        
+    return True, domain
+
+def get_neighbors(x1, y1):
+    x2, y2 = get_other_pole(x1, y1)
+    n = len(State.board)
+    m = len(State.board[0])
     
     neighbors = [[x1-1, y1, '1'], [x1+1, y1, '1'], [x1, y1-1, '1'], [x1, y1+1, '1'], 
                  [x2-1, y2, '2'], [x2+1, y2, '2'], [x2, y2-1, '2'], [x2, y2+1, '2']]
@@ -171,47 +187,14 @@ def forward_check(board, domain, x1, y1, x2, y2):
         
         if (x < 0 or x >= n or y < 0 or y >= m or (x == x1 and y == y1) or (x == x2 and y == y2)):
             neighbors[i] = None
-    
-    
-    
-    # print_state(board)
-    
-    value_1 = board[x1][y1]
-    value_2 = board[x2][y2]
-    # print(neighbors)
-    for pair in neighbors:
-        if (pair != None):
-            mode = pair[2]
-            if (value_1 =='+' or value_1 =='-'):
-                if (mode == '1'):
-                    if (board[pair[0]][pair[1]] == value_1):
-                        return False, None
-                    elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_2):
-                        x, y = get_other_pole(pair[0], pair[1])
-                        if (x != None and y != None):                        
-                            if value_2 in domain[x][y]:domain[x][y].remove(value_2)
-                            if value_1 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_1)
-                            if len(domain[x][y])==0:
-                                return False, None
-                            if len(domain[pair[0]][pair[1]])==0:
-                                return False, None
-                        
-                elif (mode == '2'):
-                    if (board[pair[0]][pair[1]] == value_2):
-                        return False, None
-                    elif (board[pair[0]][pair[1]] != ' ' and board[pair[0]][pair[1]] != value_1):
-                        x, y = get_other_pole(pair[0], pair[1])
-                        if (x != None and y != None):                        
-                            if value_1 in domain[x][y]:domain[x][y].remove(value_1)
-                            if value_2 in domain[pair[0]][pair[1]]:domain[pair[0]][pair[1]].remove(value_2)
-                            if len(domain[x][y])==0:
-                                return False, None
-                            if len(domain[pair[0]][pair[1]])==0:
-                                return False, None
-                        
-    
-        
-    return True, domain
+            
+    res = []
+    for n in neighbors:
+        if (n != None):
+            res.append(n)
+            
+    return res
+            
 
 def get_other_pole(x, y):
     num = State.board[x][y]
@@ -226,8 +209,17 @@ def get_other_pole(x, y):
     elif (x+1 < n and State.board[x+1][y] == num):
         return x+1, y
     
-    # print(x, y)
     return None, None
+
+
+def checked_cells(board, n, m):
+    count = 0
+    for i in range(0, n):
+        for j in range(0, m):
+            if (board[i][j] == '+' or board[i][j] == '-' or board[i][j] == ' '):
+                count+=1
+    
+    return count
 
     
 def finished(board):
@@ -273,5 +265,53 @@ def mrv(board, domain):
                     min = size
                     return i, j
                 
+                
+def lcv(m_board, m_domain, x1, y1):
+    board = copy.deepcopy(m_board)
+    domain = copy.deepcopy(m_domain)
+    sorted_domain = []
+    x2, y2 = get_other_pole(x1, y1)
+    neighbors = get_neighbors(x1, y1)
+    constraint_counts = []
+    for d in domain:
+        if (d == '+'):
+            d_prime = '-'
+        elif (d == '-'):
+            d_prime = '+'
+        else :
+            d_prime = ' '
+        constraint_count = 0
+        for n in neighbors:
+            x = n[0]
+            y = n[1]
+            mode = n[2]
+            
+            if mode == '1':
+                if d_prime in domain[x][y]:
+                    constraint_count+=1
+                    if len(domain[x][y])==1:
+                        constraint_count+=10
+            elif mode == '2':
+                if d in domain[x][y]:
+                    constraint_count+=1
+                    if len(domain[x][y])==1:
+                        constraint_count+=10
         
+        constraint_counts.append(constraint_count)
+        
+    for i in range(0, len(constraint_counts)-1):
+        for j in range (i+1, len(constraint_counts)):
+            if (constraint_counts[i] > constraint_counts[j]):
+                temp = constraint_counts[j]
+                constraint_counts[j] = constraint_counts[i]
+                constraint_counts[i] = temp
+                
+                temp = domain[x1][y1][j]
+                domain[x1][y1][j] = domain[x1][y1][i]
+                domain[x1][y1][i] = temp
     
+    
+    return domain[x1][y1]    
+            
+    
+                
