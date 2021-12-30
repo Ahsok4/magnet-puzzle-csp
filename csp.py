@@ -1,4 +1,5 @@
 import math
+from os import remove
 from state import *
 import copy
 
@@ -18,6 +19,10 @@ def backtrack(board, domain):
     
     x1, y1 = mrv(board, domain)  
     x2, y2 = get_other_pole(x1, y1)
+    
+    contradiction = ac3(copy.deepcopy(board), copy.deepcopy(domain))
+    if contradiction:
+        return False
     
     ## check constraints of problem
     if (not is_safe(board, x1, y1, x2, y2)):
@@ -119,6 +124,62 @@ def is_safe(board, x1, y1, x2, y2):
     
     return True
         
+def ac3(board, domain):
+    queue = []
+    
+    n = len(board)
+    m = len(board[0])
+    
+    for i in range(0, n):
+        for j in range(0, m):
+            if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
+                queue.append([i, j])
+            
+    contradiction = False
+    
+    while (len(queue) > 0 and not contradiction):
+        v = queue.pop(0)
+        neighbors = get_neighbors(v[0], v[1])
+        
+        for n in neighbors:
+            x = n[0]
+            y = n[1]
+            if (board[x][y] != '+' and board[x][y] != '-' and board[x][y] != ' '):
+                flag, y_domain = revise(v[0], v[1], board, domain)
+                if flag:
+                    if len(y_domain)==0:
+                        contradiction = False
+                    queue.append([x, y])
+    
+    return contradiction
+
+def revise(x1, y1, board, domain):
+    x2, y2 = get_other_pole(x1, y1)
+    y_domain = domain[x2][y2]
+    x_domain = domain[x1][y1]
+    removed = False
+    for v in y_domain:
+        d = board[x2][y2]
+
+        found = False
+        if (d == '+'):
+            d_prime = '-'
+        elif (d == '-'):
+            d_prime = '+'
+        else:
+            d_prime = None
+            
+        for dm in x_domain:
+            if dm == d_prime and d_prime != None:
+                found = True
+                
+        if (not found):
+            if v in y_domain:y_domain.remove(v)
+            removed = True
+    
+    return removed, y_domain
+
+                
     
 def print_state(board):
     n = len(board)
@@ -137,7 +198,7 @@ def forward_check(board, domain, x1, y1, x2, y2):
     
     neighbors = get_neighbors(x1, y1)
     
-    
+        
     value_1 = board[x1][y1]
     value_2 = board[x2][y2]
     for pair in neighbors:
