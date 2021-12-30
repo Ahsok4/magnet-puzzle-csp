@@ -20,9 +20,11 @@ def backtrack(board, domain):
     x1, y1 = mrv(board, domain)  
     x2, y2 = get_other_pole(x1, y1)
     
-    contradiction = ac3(copy.deepcopy(board), copy.deepcopy(domain))
-    if contradiction:
-        return False
+    if ((x1 == 0 and y1 == 0) or (x1 == n/2 and y1 == m/2)):
+        contradiction, dm = ac3(copy.deepcopy(board), copy.deepcopy(domain))
+        if contradiction:
+            return False
+        
     
     ## check constraints of problem
     if (not is_safe(board, x1, y1, x2, y2)):
@@ -149,9 +151,11 @@ def ac3(board, domain):
                 if flag:
                     if len(y_domain)==0:
                         contradiction = False
+                        break
                     queue.append([x, y])
+                    domain[x][y] = y_domain
     
-    return contradiction
+    return contradiction, domain
 
 def revise(x1, y1, board, domain):
     x2, y2 = get_other_pole(x1, y1)
@@ -172,7 +176,8 @@ def revise(x1, y1, board, domain):
         for dm in x_domain:
             if dm == d_prime and d_prime != None:
                 found = True
-                
+        
+        
         if (not found):
             if v in y_domain:y_domain.remove(v)
             removed = True
