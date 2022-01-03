@@ -1,8 +1,6 @@
 import math
-from os import remove
 from state import *
 import copy
-
 def backtrack(board, domain):
     n = len(board)
     m = len(board[0])
@@ -21,10 +19,11 @@ def backtrack(board, domain):
     x2, y2 = get_other_pole(x1, y1)
     
     if ((x1 == 0 and y1 == 0) or (x1 == n/2 and y1 == m/2)):
-        contradiction, dm = ac3(copy.deepcopy(board), copy.deepcopy(domain))
+        contradiction, ac3_domain = ac3(board, domain)
+        domain = ac3_domain
+        
         if contradiction:
             return False
-        
     
     ## check constraints of problem
     if (not is_safe(board, x1, y1, x2, y2)):
@@ -49,19 +48,14 @@ def backtrack(board, domain):
         new_board[x1][y1] = d
         new_board[x2][y2] = d_prime
         
-        if d in new_domain[x1][y1]:new_domain[x1][y1].remove(d)
-        if d_prime in new_domain[x1][y1]:new_domain[x1][y1].remove(d_prime)
-        
-        if d in new_domain[x2][y2]:new_domain[x2][y2].remove(d)
-        if d_prime in new_domain[x2][y2]:new_domain[x2][y2].remove(d_prime)
-        
         ## forward check
         flag, nd = forward_check(new_board, new_domain, x1, y1, x2, y2)
         
         if (flag):
             if (backtrack(new_board, nd)):
                 return True
-            
+    
+    
     return False
 
 
@@ -132,11 +126,15 @@ def ac3(board, domain):
     n = len(board)
     m = len(board[0])
     
+    k = 1
     for i in range(0, n):
         for j in range(0, m):
-            if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
-                queue.append([i, j])
-            
+            if (State.board[i][j] == k):
+                if (board[i][j] != '+' and board[i][j] != '-' and board[i][j] != ' '):
+                    queue.append([i, j])
+                k+=1
+    
+    
     contradiction = False
     
     while (len(queue) > 0 and not contradiction):
@@ -147,42 +145,63 @@ def ac3(board, domain):
             x = n[0]
             y = n[1]
             if (board[x][y] != '+' and board[x][y] != '-' and board[x][y] != ' '):
-                flag, y_domain = revise(v[0], v[1], board, domain)
+                flag, new_domain = revise(v, n, domain)
+                domain = new_domain
                 if flag:
-                    if len(y_domain)==0:
+                    if len(new_domain)==0:
                         contradiction = False
                         break
                     queue.append([x, y])
-                    domain[x][y] = y_domain
     
     return contradiction, domain
 
-def revise(x1, y1, board, domain):
+def revise(x, neighbor, domain):
+    x1, y1 = x
     x2, y2 = get_other_pole(x1, y1)
-    y_domain = domain[x2][y2]
-    x_domain = domain[x1][y1]
-    removed = False
-    for v in y_domain:
-        d = board[x2][y2]
-
-        found = False
-        if (d == '+'):
-            d_prime = '-'
-        elif (d == '-'):
-            d_prime = '+'
-        else:
-            d_prime = None
-            
-        for dm in x_domain:
-            if dm == d_prime and d_prime != None:
-                found = True
-        
-        
-        if (not found):
-            if v in y_domain:y_domain.remove(v)
-            removed = True
     
-    return removed, y_domain
+    x_n1, y_n1, mode = neighbor
+    x_n2, y_n2 = get_other_pole(x_n1, y_n1)
+    
+    removed = False
+    if mode == '1':
+        for v in domain[x_n1][y_n1]:
+            found = False
+        
+            if (v == '+'):
+                d = '-'
+            elif (v == '-'):
+                d = '+'
+            else:
+                d = v
+                
+            if d in domain[x1][y1]:found = True
+
+            if (not found and v != d):
+                if v in domain[x_n1][y_n1]:domain[x_n1][y_n1].remove(v)
+                if d in domain[x_n2][y_n2]:domain[x_n2][y_n2].remove(d)
+
+                removed = True
+                
+    if mode == '2':
+        for v in domain[x_n1][y_n1]:
+            found = False
+        
+            if (v == '+'):
+                d = '-'
+            elif (v == '-'):
+                d = '+'
+            else:
+                d = v
+                
+            if d in domain[x2][y2]:found = True
+                    
+            if (not found and v != d):
+                if v in domain[x_n1][y_n1]:domain[x_n1][y_n1].remove(v)
+                if d in domain[x_n2][y_n2]:domain[x_n2][y_n2].remove(d)
+
+                removed = True
+    
+    return removed, domain
 
                 
     
