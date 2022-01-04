@@ -6,7 +6,7 @@ from time import time
 if __name__ == "__main__":
     
     input_numbers = []
-    input = open('input2.txt').readlines()
+    input = open('input.txt').readlines()
     for line in input:
         line = line.rstrip()
         numbers = line.split(' ')

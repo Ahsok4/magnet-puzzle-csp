@@ -13,6 +13,8 @@ def backtrack(board, domain):
     if (checked_cells(board, n, m) == n*m):
         return False
 
+    # print_state(board)
+    
     ## choose a variable based on lenght of domain (MRV)
     
     x1, y1 = mrv(board, domain)  
